@@ -11,11 +11,24 @@ This Ansible playbook automatically installs and configures:
 - **oh-my-zsh** - Community-driven framework for managing zsh configuration
 - **powerlevel10k** - Feature-rich theme for zsh
 - **zsh plugins** - Pre-configured plugins including:
-  - git (built-in oh-my-zsh plugin)
-  - zsh-autosuggestions (command suggestions)
-  - zsh-syntax-highlighting (syntax highlighting)
+  - git (built-in oh-my-zsh plugin for git aliases and info)
+  - docker & docker-compose (completion and aliases)
+  - sudo (press ESC twice to prefix command with sudo)
+  - command-not-found (suggests package to install for unknown commands)
+  - colored-man-pages (adds colors to man pages)
+  - extract (universal archive extractor with 'x' command)
+  - web-search (search the web from terminal, e.g., 'google query')
+  - zsh-autosuggestions (command suggestions based on history)
+  - zsh-syntax-highlighting (real-time syntax highlighting)
   - you-should-use (alias reminders)
   - zsh-bat (better cat with syntax highlighting)
+- **zsh options** - Configured settings:
+  - History timestamps in ISO format
+  - Completion waiting dots
+  - Auto-update disabled (manual updates)
+  - Hyphen-insensitive completion
+  - Command auto-correction enabled
+  - Custom plugin options (YSU message position, autosuggestion colors)
 - **JetBrains Toolbox** - Manage JetBrains IDEs (IntelliJ IDEA, PyCharm, etc.)
 - **GitKraken** - Git GUI client
 - **Vicinae/Neovim** - Modern text editor (placeholder implementation)

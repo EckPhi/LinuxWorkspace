@@ -109,6 +109,27 @@
   when: ansible_os_family == "Archlinux"
   ignore_errors: yes
 
+- name: Install command-not-found for plugin (Debian/Ubuntu)
+  apt:
+    name: command-not-found
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install pkgfile for command-not-found functionality (Arch)
+  pacman:
+    name: pkgfile
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Update pkgfile database (Arch)
+  shell: pkgfile --update
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+  changed_when: false
+
+
 - name: Clone zsh-autosuggestions plugin
   become: yes
   become_user: "{{ target_user }}"
@@ -151,5 +172,48 @@
   lineinfile:
     path: "{{ user_home_dir }}/.zshrc"
     regexp: '^\s*plugins\s*=\s*\('
-    line: 'plugins=(git zsh-autosuggestions zsh-syntax-highlighting you-should-use zsh-bat)'
+    line: 'plugins=(git docker docker-compose sudo command-not-found colored-man-pages extract web-search zsh-autosuggestions zsh-syntax-highlighting you-should-use zsh-bat)'
     backup: yes
+
+# Configure zsh options
+- name: Add zsh options and plugin configurations to .zshrc
+  become: yes
+  become_user: "{{ target_user }}"
+  blockinfile:
+    path: "{{ user_home_dir }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - ZSH Options"
+    block: |
+      # History timestamp format
+      HIST_STAMPS="yyyy-mm-dd"
+      
+      # Show completion waiting dots
+      COMPLETION_WAITING_DOTS="true"
+      
+      # Disable auto-update prompts (update manually with: omz update)
+      zstyle ':omz:update' mode disabled
+      
+      # Case-sensitive completion
+      # CASE_SENSITIVE="true"
+      
+      # Hyphen-insensitive completion (makes completion case-insensitive if CASE_SENSITIVE is not set)
+      HYPHEN_INSENSITIVE="true"
+      
+      # Disable colors in ls
+      # DISABLE_LS_COLORS="true"
+      
+      # Disable auto-setting terminal title
+      # DISABLE_AUTO_TITLE="true"
+      
+      # Enable command auto-correction
+      ENABLE_CORRECTION="true"
+      
+      # Display red dots whilst waiting for completion
+      # COMPLETION_WAITING_DOTS="true"
+      
+      # Plugin-specific options
+      # you-should-use plugin: reminder message style
+      export YSU_MESSAGE_POSITION="after"
+      
+      # zsh-autosuggestions: suggestion highlight style
+      ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
+    insertbefore: '# {mark} ANSIBLE MANAGED BLOCK - Powerlevel10k'
