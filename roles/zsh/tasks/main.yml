@@ -93,3 +93,63 @@
       # To configure powerlevel10k, run: p10k configure
       # Or manually edit ~/.p10k.zsh
     insertafter: EOF
+
+# Install zsh plugins
+- name: Install bat for zsh-bat plugin (Debian/Ubuntu)
+  apt:
+    name: bat
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install bat for zsh-bat plugin (Arch)
+  pacman:
+    name: bat
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Clone zsh-autosuggestions plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/zsh-users/zsh-autosuggestions.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    depth: 1
+    update: yes
+
+- name: Clone zsh-syntax-highlighting plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    depth: 1
+    update: yes
+
+- name: Clone you-should-use plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/MichaelAquilina/zsh-you-should-use.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/you-should-use"
+    depth: 1
+    update: yes
+
+- name: Clone zsh-bat plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/fdellwing/zsh-bat.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/zsh-bat"
+    depth: 1
+    update: yes
+
+- name: Configure plugins in .zshrc
+  become: yes
+  become_user: "{{ target_user }}"
+  lineinfile:
+    path: "{{ user_home_dir }}/.zshrc"
+    regexp: '^plugins=\('
+    line: 'plugins=(git zsh-autosuggestions zsh-syntax-highlighting you-should-use zsh-bat)'
+    backup: yes

@@ -10,6 +10,12 @@ This Ansible playbook automatically installs and configures:
 - **zsh** - Enhanced shell with oh-my-zsh framework
 - **oh-my-zsh** - Community-driven framework for managing zsh configuration
 - **powerlevel10k** - Feature-rich theme for zsh
+- **zsh plugins** - Pre-configured plugins including:
+  - git (built-in oh-my-zsh plugin)
+  - zsh-autosuggestions (command suggestions)
+  - zsh-syntax-highlighting (syntax highlighting)
+  - you-should-use (alias reminders)
+  - zsh-bat (better cat with syntax highlighting)
 - **JetBrains Toolbox** - Manage JetBrains IDEs (IntelliJ IDEA, PyCharm, etc.)
 - **GitKraken** - Git GUI client
 - **Vicinae/Neovim** - Modern text editor (placeholder implementation)
