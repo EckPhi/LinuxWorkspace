@@ -35,7 +35,12 @@
 - name: Extract download URL from response
   set_fact:
     jetbrains_download_url: "{{ jetbrains_release_info.json.TBA[0].downloads.linux.link }}"
-  when: not jetbrains_stat.stat.exists and jetbrains_release_info.json.TBA is defined
+  when: 
+    - not jetbrains_stat.stat.exists
+    - jetbrains_release_info.json.TBA is defined
+    - jetbrains_release_info.json.TBA | length > 0
+    - jetbrains_release_info.json.TBA[0].downloads is defined
+    - jetbrains_release_info.json.TBA[0].downloads.linux is defined
 
 - name: Download JetBrains Toolbox
   get_url:
@@ -62,7 +67,7 @@
 
 - name: Copy JetBrains Toolbox to /opt
   copy:
-    src: "{{ jetbrains_binary.files[0].path }}"
+    src: "{{ jetbrains_binary.files | first | json_query('path') }}"
     dest: /opt/jetbrains-toolbox/jetbrains-toolbox
     mode: '0755'
     remote_src: yes
@@ -70,6 +75,7 @@
     - not jetbrains_stat.stat.exists
     - jetbrains_download_url is defined
     - jetbrains_binary.matched > 0
+    - jetbrains_binary.files | length > 0
 
 - name: Create desktop entry for JetBrains Toolbox
   copy:
