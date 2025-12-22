@@ -207,9 +207,6 @@
       # Enable command auto-correction
       ENABLE_CORRECTION="true"
       
-      # Display red dots whilst waiting for completion
-      # COMPLETION_WAITING_DOTS="true"
-      
       # Plugin-specific options
       # you-should-use plugin: reminder message style
       export YSU_MESSAGE_POSITION="after"
