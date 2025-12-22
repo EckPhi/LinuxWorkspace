@@ -150,6 +150,6 @@
   become_user: "{{ target_user }}"
   lineinfile:
     path: "{{ user_home_dir }}/.zshrc"
-    regexp: '^plugins=\('
+    regexp: '^\s*plugins\s*=\s*\('
     line: 'plugins=(git zsh-autosuggestions zsh-syntax-highlighting you-should-use zsh-bat)'
     backup: yes
