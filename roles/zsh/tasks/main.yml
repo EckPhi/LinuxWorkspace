@@ -1,0 +1,91 @@
+---
+# Install and configure zsh with oh-my-zsh and powerlevel10k
+
+- name: Install zsh (Debian/Ubuntu)
+  apt:
+    name: zsh
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install zsh (Arch)
+  pacman:
+    name: zsh
+    state: present
+  when: ansible_os_family == "Archlinux"
+
+- name: Install fonts-powerline for better terminal experience (Debian/Ubuntu)
+  apt:
+    name: fonts-powerline
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install powerline-fonts (Arch)
+  pacman:
+    name: powerline-fonts
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Get current user
+  set_fact:
+    target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+- name: Get user home directory
+  shell: "eval echo ~{{ target_user }}"
+  register: user_home
+  changed_when: false
+
+- name: Check if oh-my-zsh is already installed
+  stat:
+    path: "{{ user_home.stdout }}/.oh-my-zsh"
+  register: ohmyzsh_stat
+
+- name: Download oh-my-zsh installation script
+  get_url:
+    url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    dest: /tmp/install_ohmyzsh.sh
+    mode: '0755'
+  when: not ohmyzsh_stat.stat.exists
+
+- name: Install oh-my-zsh
+  become: yes
+  become_user: "{{ target_user }}"
+  shell: sh /tmp/install_ohmyzsh.sh --unattended
+  args:
+    creates: "{{ user_home.stdout }}/.oh-my-zsh"
+  when: not ohmyzsh_stat.stat.exists
+
+- name: Clone powerlevel10k theme
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/romkatv/powerlevel10k.git
+    dest: "{{ user_home.stdout }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    depth: 1
+    update: yes
+
+- name: Set zsh as default shell for user
+  user:
+    name: "{{ target_user }}"
+    shell: /bin/zsh
+
+- name: Configure .zshrc to use powerlevel10k theme
+  become: yes
+  become_user: "{{ target_user }}"
+  lineinfile:
+    path: "{{ user_home.stdout }}/.zshrc"
+    regexp: '^ZSH_THEME='
+    line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
+    backup: yes
+
+- name: Add powerlevel10k configuration hint to .zshrc
+  become: yes
+  become_user: "{{ target_user }}"
+  blockinfile:
+    path: "{{ user_home.stdout }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Powerlevel10k"
+    block: |
+      # To configure powerlevel10k, run: p10k configure
+      # Or manually edit ~/.p10k.zsh
+    insertafter: EOF

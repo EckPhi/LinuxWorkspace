@@ -1,0 +1,84 @@
+---
+# Install JetBrains Toolbox App
+
+- name: Get current user
+  set_fact:
+    target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+- name: Get user home directory
+  shell: "eval echo ~{{ target_user }}"
+  register: user_home
+  changed_when: false
+
+- name: Create opt directory for JetBrains Toolbox
+  file:
+    path: /opt/jetbrains-toolbox
+    state: directory
+    mode: '0755'
+
+- name: Check if JetBrains Toolbox is already installed
+  stat:
+    path: /opt/jetbrains-toolbox/jetbrains-toolbox
+  register: jetbrains_stat
+
+- name: Get latest JetBrains Toolbox version
+  shell: |
+    curl -s 'https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release' | grep -Po '"linux":.*?[^\\]",' | awk -F ':' '{print $3,":"$4}'| sed 's/[", ]//g'
+  register: jetbrains_url
+  changed_when: false
+  when: not jetbrains_stat.stat.exists
+
+- name: Download JetBrains Toolbox
+  get_url:
+    url: "{{ jetbrains_url.stdout }}"
+    dest: /tmp/jetbrains-toolbox.tar.gz
+    mode: '0644'
+  when: not jetbrains_stat.stat.exists
+
+- name: Extract JetBrains Toolbox
+  unarchive:
+    src: /tmp/jetbrains-toolbox.tar.gz
+    dest: /tmp/
+    remote_src: yes
+  when: not jetbrains_stat.stat.exists
+
+- name: Find extracted JetBrains Toolbox binary
+  find:
+    paths: /tmp
+    patterns: "jetbrains-toolbox"
+    recurse: yes
+    file_type: file
+  register: jetbrains_binary
+  when: not jetbrains_stat.stat.exists
+
+- name: Copy JetBrains Toolbox to /opt
+  copy:
+    src: "{{ jetbrains_binary.files[0].path }}"
+    dest: /opt/jetbrains-toolbox/jetbrains-toolbox
+    mode: '0755'
+    remote_src: yes
+  when: not jetbrains_stat.stat.exists and jetbrains_binary.files | length > 0
+
+- name: Create desktop entry for JetBrains Toolbox
+  copy:
+    dest: /usr/share/applications/jetbrains-toolbox.desktop
+    content: |
+      [Desktop Entry]
+      Version=1.0
+      Type=Application
+      Name=JetBrains Toolbox
+      Icon=jetbrains-toolbox
+      Exec=/opt/jetbrains-toolbox/jetbrains-toolbox
+      Comment=JetBrains Toolbox App
+      Categories=Development;IDE;
+      Terminal=false
+      StartupWMClass=jetbrains-toolbox
+    mode: '0644'
+
+- name: Clean up temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/jetbrains-toolbox.tar.gz
+  ignore_errors: yes

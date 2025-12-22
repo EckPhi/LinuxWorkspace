@@ -1,0 +1,40 @@
+---
+# Install Vicinae
+# Note: Vicinae is not a widely recognized package. 
+# This role serves as a placeholder and can be customized based on specific requirements.
+# If you meant Neovim, please modify this role accordingly.
+
+- name: Display message about Vicinae installation
+  debug:
+    msg: |
+      Vicinae installation is configured as a placeholder.
+      Please customize this role based on your specific requirements.
+      If you meant to install Neovim, consider renaming this role and updating the tasks.
+
+# Uncomment and modify the following tasks if Vicinae is a specific software:
+# - name: Install Vicinae (Debian/Ubuntu)
+#   apt:
+#     name: vicinae
+#     state: present
+#   when: ansible_os_family == "Debian"
+
+# - name: Install Vicinae (Arch)
+#   pacman:
+#     name: vicinae
+#     state: present
+#   when: ansible_os_family == "Archlinux"
+
+# Example: If you meant Neovim instead:
+- name: Install Neovim (Debian/Ubuntu)
+  apt:
+    name: neovim
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install Neovim (Arch)
+  pacman:
+    name: neovim
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
