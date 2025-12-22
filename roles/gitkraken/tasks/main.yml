@@ -13,8 +13,6 @@
 - name: Install GitKraken dependencies (Debian/Ubuntu)
   apt:
     name:
-      - libcurl4
-      - libcurl3-gnutls
       - libgbm1
       - libgtk-3-0
       - libnss3

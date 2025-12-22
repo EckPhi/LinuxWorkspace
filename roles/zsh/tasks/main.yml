@@ -31,14 +31,18 @@
   set_fact:
     target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
 
-- name: Get user home directory
-  shell: "eval echo ~{{ target_user }}"
-  register: user_home
-  changed_when: false
+- name: Get user information
+  getent:
+    database: passwd
+    key: "{{ target_user }}"
+
+- name: Set user home directory
+  set_fact:
+    user_home_dir: "{{ getent_passwd[target_user][4] }}"
 
 - name: Check if oh-my-zsh is already installed
   stat:
-    path: "{{ user_home.stdout }}/.oh-my-zsh"
+    path: "{{ user_home_dir }}/.oh-my-zsh"
   register: ohmyzsh_stat
 
 - name: Download oh-my-zsh installation script
@@ -53,7 +57,7 @@
   become_user: "{{ target_user }}"
   shell: sh /tmp/install_ohmyzsh.sh --unattended
   args:
-    creates: "{{ user_home.stdout }}/.oh-my-zsh"
+    creates: "{{ user_home_dir }}/.oh-my-zsh"
   when: not ohmyzsh_stat.stat.exists
 
 - name: Clone powerlevel10k theme
@@ -61,7 +65,7 @@
   become_user: "{{ target_user }}"
   git:
     repo: https://github.com/romkatv/powerlevel10k.git
-    dest: "{{ user_home.stdout }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/themes/powerlevel10k"
     depth: 1
     update: yes
 
@@ -74,7 +78,7 @@
   become: yes
   become_user: "{{ target_user }}"
   lineinfile:
-    path: "{{ user_home.stdout }}/.zshrc"
+    path: "{{ user_home_dir }}/.zshrc"
     regexp: '^ZSH_THEME='
     line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
     backup: yes
@@ -83,7 +87,7 @@
   become: yes
   become_user: "{{ target_user }}"
   blockinfile:
-    path: "{{ user_home.stdout }}/.zshrc"
+    path: "{{ user_home_dir }}/.zshrc"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Powerlevel10k"
     block: |
       # To configure powerlevel10k, run: p10k configure
