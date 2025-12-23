@@ -1,0 +1,56 @@
+---
+# Detect the OS family and install basic packages
+- name: Set OS-specific variables for Debian/Ubuntu
+  set_fact:
+    package_manager: apt
+    git_package: git
+  when: ansible_os_family == "Debian"
+
+- name: Set OS-specific variables for Arch
+  set_fact:
+    package_manager: pacman
+    git_package: git
+  when: ansible_os_family == "Archlinux"
+
+- name: Update package cache (Debian/Ubuntu)
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Update package cache (Arch)
+  pacman:
+    update_cache: yes
+  when: ansible_os_family == "Archlinux"
+
+- name: Install Git (Debian/Ubuntu)
+  apt:
+    name: git
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Git (Arch)
+  pacman:
+    name: git
+    state: present
+  when: ansible_os_family == "Archlinux"
+
+- name: Install required packages for downloads (Debian/Ubuntu)
+  apt:
+    name:
+      - wget
+      - curl
+      - tar
+      - gzip
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install required packages for downloads (Arch)
+  pacman:
+    name:
+      - wget
+      - curl
+      - tar
+      - gzip
+    state: present
+  when: ansible_os_family == "Archlinux"

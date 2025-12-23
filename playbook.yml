@@ -1,0 +1,13 @@
+---
+- name: Setup Linux Workspace
+  hosts: local
+  become: yes
+  gather_facts: yes
+  
+  roles:
+    - common
+    - zsh
+    - docker
+    - jetbrains
+    - gitkraken
+    - vicinae

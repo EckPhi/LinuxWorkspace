@@ -1,0 +1,13 @@
+---
+# Ansible Galaxy requirements
+# Install with: ansible-galaxy install -r requirements.yml
+
+# Example collection (uncomment if needed):
+# collections:
+#   - name: community.general
+#     version: ">=3.0.0"
+
+# Example roles (uncomment if needed):
+# roles:
+#   - name: geerlingguy.git
+#     version: "3.0.0"

@@ -1,0 +1,216 @@
+---
+# Install and configure zsh with oh-my-zsh and powerlevel10k
+
+- name: Install zsh (Debian/Ubuntu)
+  apt:
+    name: zsh
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install zsh (Arch)
+  pacman:
+    name: zsh
+    state: present
+  when: ansible_os_family == "Archlinux"
+
+- name: Install fonts-powerline for better terminal experience (Debian/Ubuntu)
+  apt:
+    name: fonts-powerline
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install powerline-fonts (Arch)
+  pacman:
+    name: powerline-fonts
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Get current user
+  set_fact:
+    target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+- name: Get user information
+  getent:
+    database: passwd
+    key: "{{ target_user }}"
+
+- name: Set user home directory
+  set_fact:
+    user_home_dir: "{{ getent_passwd[target_user][4] }}"
+
+- name: Check if oh-my-zsh is already installed
+  stat:
+    path: "{{ user_home_dir }}/.oh-my-zsh"
+  register: ohmyzsh_stat
+
+- name: Download oh-my-zsh installation script
+  get_url:
+    url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    dest: /tmp/install_ohmyzsh.sh
+    mode: '0755'
+  when: not ohmyzsh_stat.stat.exists
+
+- name: Install oh-my-zsh
+  become: yes
+  become_user: "{{ target_user }}"
+  shell: sh /tmp/install_ohmyzsh.sh --unattended
+  args:
+    creates: "{{ user_home_dir }}/.oh-my-zsh"
+  when: not ohmyzsh_stat.stat.exists
+
+- name: Clone powerlevel10k theme
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/romkatv/powerlevel10k.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    depth: 1
+    update: yes
+
+- name: Set zsh as default shell for user
+  user:
+    name: "{{ target_user }}"
+    shell: /bin/zsh
+
+- name: Configure .zshrc to use powerlevel10k theme
+  become: yes
+  become_user: "{{ target_user }}"
+  lineinfile:
+    path: "{{ user_home_dir }}/.zshrc"
+    regexp: '^ZSH_THEME='
+    line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
+    backup: yes
+
+- name: Add powerlevel10k configuration hint to .zshrc
+  become: yes
+  become_user: "{{ target_user }}"
+  blockinfile:
+    path: "{{ user_home_dir }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Powerlevel10k"
+    block: |
+      # To configure powerlevel10k, run: p10k configure
+      # Or manually edit ~/.p10k.zsh
+    insertafter: EOF
+
+# Install zsh plugins
+- name: Install bat for zsh-bat plugin (Debian/Ubuntu)
+  apt:
+    name: bat
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install bat for zsh-bat plugin (Arch)
+  pacman:
+    name: bat
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Install command-not-found for plugin (Debian/Ubuntu)
+  apt:
+    name: command-not-found
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install pkgfile for command-not-found functionality (Arch)
+  pacman:
+    name: pkgfile
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Update pkgfile database (Arch)
+  shell: pkgfile --update
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+  changed_when: false
+
+
+- name: Clone zsh-autosuggestions plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/zsh-users/zsh-autosuggestions.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    depth: 1
+    update: yes
+
+- name: Clone zsh-syntax-highlighting plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    depth: 1
+    update: yes
+
+- name: Clone you-should-use plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/MichaelAquilina/zsh-you-should-use.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/you-should-use"
+    depth: 1
+    update: yes
+
+- name: Clone zsh-bat plugin
+  become: yes
+  become_user: "{{ target_user }}"
+  git:
+    repo: https://github.com/fdellwing/zsh-bat.git
+    dest: "{{ user_home_dir }}/.oh-my-zsh/custom/plugins/zsh-bat"
+    depth: 1
+    update: yes
+
+- name: Configure plugins in .zshrc
+  become: yes
+  become_user: "{{ target_user }}"
+  lineinfile:
+    path: "{{ user_home_dir }}/.zshrc"
+    regexp: '^\s*plugins\s*=\s*\('
+    line: 'plugins=(git docker docker-compose sudo command-not-found colored-man-pages extract web-search zsh-autosuggestions zsh-syntax-highlighting you-should-use zsh-bat)'
+    backup: yes
+
+# Configure zsh options
+- name: Add zsh options and plugin configurations to .zshrc
+  become: yes
+  become_user: "{{ target_user }}"
+  blockinfile:
+    path: "{{ user_home_dir }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - ZSH Options"
+    block: |
+      # History timestamp format
+      HIST_STAMPS="yyyy-mm-dd"
+      
+      # Show completion waiting dots
+      COMPLETION_WAITING_DOTS="true"
+      
+      # Disable auto-update prompts (update manually with: omz update)
+      zstyle ':omz:update' mode disabled
+      
+      # Case-sensitive completion
+      # CASE_SENSITIVE="true"
+      
+      # Hyphen-insensitive completion (makes completion case-insensitive if CASE_SENSITIVE is not set)
+      HYPHEN_INSENSITIVE="true"
+      
+      # Disable colors in ls
+      # DISABLE_LS_COLORS="true"
+      
+      # Disable auto-setting terminal title
+      # DISABLE_AUTO_TITLE="true"
+      
+      # Enable command auto-correction
+      ENABLE_CORRECTION="true"
+      
+      # Plugin-specific options
+      # you-should-use plugin: reminder message style
+      export YSU_MESSAGE_POSITION="after"
+      
+      # zsh-autosuggestions: suggestion highlight style
+      ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
+    insertbefore: '# {mark} ANSIBLE MANAGED BLOCK - Powerlevel10k'

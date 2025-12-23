@@ -1,0 +1,32 @@
+---
+# Example variables for customizing the setup
+# Copy this file to group_vars/all.yml and modify as needed
+
+# User configuration
+# target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+# Git configuration (optional)
+# git_user_name: "Your Name"
+# git_user_email: "your.email@example.com"
+
+# zsh theme
+# zsh_theme: "powerlevel10k/powerlevel10k"
+
+# Additional packages to install (examples)
+# additional_packages_debian:
+#   - vim
+#   - htop
+#   - tmux
+#   - docker.io
+
+# additional_packages_arch:
+#   - vim
+#   - htop
+#   - tmux
+#   - docker
+
+# Skip certain roles (set to false to skip)
+# install_zsh: true
+# install_jetbrains: true
+# install_gitkraken: true
+# install_vicinae: true

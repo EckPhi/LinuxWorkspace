@@ -1,0 +1,102 @@
+---
+# Install Docker and Docker Compose
+
+- name: Get current user
+  set_fact:
+    target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+# Debian/Ubuntu Docker Installation
+- name: Install Docker prerequisites (Debian/Ubuntu)
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Create directory for Docker GPG key (Debian/Ubuntu)
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  when: ansible_os_family == "Debian"
+
+- name: Download Docker GPG key (Debian/Ubuntu)
+  get_url:
+    url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+    dest: /tmp/docker.gpg
+    mode: '0644'
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker GPG key (Debian/Ubuntu)
+  shell: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+  when: ansible_os_family == "Debian"
+
+- name: Set permissions on Docker GPG key (Debian/Ubuntu)
+  file:
+    path: /etc/apt/keyrings/docker.gpg
+    mode: '0644'
+  when: ansible_os_family == "Debian"
+
+- name: Remove temporary GPG key file (Debian/Ubuntu)
+  file:
+    path: /tmp/docker.gpg
+    state: absent
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker repository (Debian/Ubuntu)
+  apt_repository:
+    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+  when: ansible_os_family == "Debian"
+
+- name: Install Docker and Docker Compose (Debian/Ubuntu)
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+# Arch Linux Docker Installation
+- name: Install Docker and Docker Compose (Arch)
+  pacman:
+    name:
+      - docker
+      - docker-compose
+    state: present
+  when: ansible_os_family == "Archlinux"
+
+# Common Docker Configuration
+- name: Ensure Docker service is started and enabled
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add user to docker group
+  user:
+    name: "{{ target_user }}"
+    groups: docker
+    append: yes
+
+- name: Display Docker installation info
+  debug:
+    msg: |
+      Docker has been installed successfully!
+      - Docker version: Run 'docker --version' to check
+      - Docker Compose: Run 'docker compose version' to check
+      - The user '{{ target_user }}' has been added to the docker group
+      - You may need to log out and back in for group changes to take effect
+      - Alternatively, run: newgrp docker

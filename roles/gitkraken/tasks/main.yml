@@ -1,0 +1,86 @@
+---
+# Install GitKraken
+
+- name: Get current user
+  set_fact:
+    target_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+- name: Check if GitKraken is already installed
+  stat:
+    path: /usr/bin/gitkraken
+  register: gitkraken_stat
+
+- name: Install GitKraken dependencies (Debian/Ubuntu)
+  apt:
+    name:
+      - libgbm1
+      - libgtk-3-0
+      - libnss3
+    state: present
+  when: ansible_os_family == "Debian" and not gitkraken_stat.stat.exists
+  ignore_errors: yes
+
+- name: Download GitKraken (Debian/Ubuntu)
+  get_url:
+    url: https://release.gitkraken.com/linux/gitkraken-amd64.deb
+    dest: /tmp/gitkraken.deb
+    mode: '0644'
+  when: ansible_os_family == "Debian" and not gitkraken_stat.stat.exists
+
+- name: Install GitKraken package (Debian/Ubuntu)
+  apt:
+    deb: /tmp/gitkraken.deb
+    state: present
+  when: ansible_os_family == "Debian" and not gitkraken_stat.stat.exists
+
+- name: Download GitKraken (Arch)
+  get_url:
+    url: https://release.gitkraken.com/linux/gitkraken-amd64.tar.gz
+    dest: /tmp/gitkraken.tar.gz
+    mode: '0644'
+  when: ansible_os_family == "Archlinux" and not gitkraken_stat.stat.exists
+
+- name: Create GitKraken directory (Arch)
+  file:
+    path: /opt/gitkraken
+    state: directory
+    mode: '0755'
+  when: ansible_os_family == "Archlinux" and not gitkraken_stat.stat.exists
+
+- name: Extract GitKraken (Arch)
+  unarchive:
+    src: /tmp/gitkraken.tar.gz
+    dest: /opt/gitkraken
+    remote_src: yes
+  when: ansible_os_family == "Archlinux" and not gitkraken_stat.stat.exists
+
+- name: Create symlink for GitKraken (Arch)
+  file:
+    src: /opt/gitkraken/gitkraken
+    dest: /usr/bin/gitkraken
+    state: link
+  when: ansible_os_family == "Archlinux" and not gitkraken_stat.stat.exists
+
+- name: Create desktop entry for GitKraken (Arch)
+  copy:
+    dest: /usr/share/applications/gitkraken.desktop
+    content: |
+      [Desktop Entry]
+      Name=GitKraken
+      Comment=Legendary Git Client
+      Exec=/usr/bin/gitkraken
+      Icon=/opt/gitkraken/gitkraken.png
+      Terminal=false
+      Type=Application
+      Categories=Development;
+    mode: '0644'
+  when: ansible_os_family == "Archlinux" and not gitkraken_stat.stat.exists
+
+- name: Clean up temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/gitkraken.deb
+    - /tmp/gitkraken.tar.gz
+  ignore_errors: yes
