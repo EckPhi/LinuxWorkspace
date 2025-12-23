@@ -25,8 +25,15 @@
     mode: '0755'
   when: ansible_os_family == "Debian"
 
+- name: Download Docker GPG key (Debian/Ubuntu)
+  get_url:
+    url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+    dest: /tmp/docker.gpg
+    mode: '0644'
+  when: ansible_os_family == "Debian"
+
 - name: Add Docker GPG key (Debian/Ubuntu)
-  shell: curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  shell: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
   args:
     creates: /etc/apt/keyrings/docker.gpg
   when: ansible_os_family == "Debian"
@@ -37,16 +44,17 @@
     mode: '0644'
   when: ansible_os_family == "Debian"
 
-- name: Add Docker repository (Debian/Ubuntu)
-  shell: |
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-  args:
-    creates: /etc/apt/sources.list.d/docker.list
+- name: Remove temporary GPG key file (Debian/Ubuntu)
+  file:
+    path: /tmp/docker.gpg
+    state: absent
   when: ansible_os_family == "Debian"
 
-- name: Update apt cache after adding Docker repository (Debian/Ubuntu)
-  apt:
-    update_cache: yes
+- name: Add Docker repository (Debian/Ubuntu)
+  apt_repository:
+    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
   when: ansible_os_family == "Debian"
 
 - name: Install Docker and Docker Compose (Debian/Ubuntu)
@@ -58,6 +66,7 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
+    update_cache: yes
   when: ansible_os_family == "Debian"
 
 # Arch Linux Docker Installation
