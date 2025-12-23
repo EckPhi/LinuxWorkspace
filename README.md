@@ -29,6 +29,11 @@ This Ansible playbook automatically installs and configures:
   - Hyphen-insensitive completion
   - Command auto-correction enabled
   - Custom plugin options (YSU message position, autosuggestion colors)
+- **Docker** - Container platform with Docker Compose
+  - Docker Engine (latest stable version)
+  - Docker Compose plugin (for Debian/Ubuntu) or docker-compose (for Arch)
+  - User added to docker group for non-root access
+  - Service enabled and started automatically
 - **JetBrains Toolbox** - Manage JetBrains IDEs (IntelliJ IDEA, PyCharm, etc.)
 - **GitKraken** - Git GUI client
 - **Vicinae/Neovim** - Modern text editor (placeholder implementation)
@@ -130,6 +135,24 @@ p10k configure
 1. Launch from application menu or run: `gitkraken`
 2. Sign in with your GitKraken/Axosoft account or use the free version
 
+### Use Docker
+
+After installation, Docker is ready to use:
+
+```bash
+# Verify Docker installation
+docker --version
+docker compose version
+
+# Test Docker with hello-world
+docker run hello-world
+
+# Run a container
+docker run -it ubuntu bash
+```
+
+**Note:** You may need to log out and back in for the docker group membership to take effect. Alternatively, run `newgrp docker` in your current session.
+
 ## Structure
 
 ```
@@ -140,6 +163,7 @@ LinuxWorkspace/
 ├── roles/                # Ansible roles
 │   ├── common/           # Common packages (Git, wget, curl, etc.)
 │   ├── zsh/              # zsh with oh-my-zsh and powerlevel10k
+│   ├── docker/           # Docker and Docker Compose
 │   ├── jetbrains/        # JetBrains Toolbox App
 │   ├── gitkraken/        # GitKraken Git client
 │   └── vicinae/          # Vicinae/Neovim (placeholder)
@@ -150,6 +174,12 @@ LinuxWorkspace/
 
 ### Permission Errors
 Make sure you run the playbook with `--ask-become-pass` to provide sudo privileges.
+
+### Docker Permission Denied
+If you get "permission denied" errors when running Docker commands, you may need to:
+1. Log out and log back in for group membership to take effect
+2. Or run `newgrp docker` in your current terminal session
+3. Verify with: `groups` (should show "docker" in the list)
 
 ### Package Not Found
 Some packages may have different names or may not be available in certain repositories. Check the role tasks and adjust package names if needed.
